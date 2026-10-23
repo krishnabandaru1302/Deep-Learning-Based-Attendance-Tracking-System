@@ -31,7 +31,7 @@ $('#match-form').addEventListener('submit', async e => {
     const form=new FormData(); form.set('image',$('#match-image').files[0]);
     currentMatch=await api('/api/matches',{method:'POST',body:form});
     if(!currentMatch.candidate_id){result.innerHTML='<strong>No candidate above the configured cutoff</strong><small>No record was created. Use a standard non-biometric attendance process.</small>';return;}
-    result.innerHTML=`<strong>Suggested candidate: ${escapeHtml(currentMatch.candidate_name)}</strong><small>Cosine distance ${currentMatch.distance.toFixed(3)} · threshold ${currentMatch.threshold}. A lower distance means a closer match in this prototype.</small><div>Review the image and identity yourself before continuing.</div><div class="result-actions"><button class="button confirm" id="confirm-match">Send to review queue</button><button class="button reject" id="reject-match">Reject suggestion</button></div>`;
+    result.innerHTML=`<strong>Suggested candidate: ${escapeHtml(currentMatch.candidate_name)}</strong><small>Cosine distance ${currentMatch.distance.toFixed(3)} · threshold ${currentMatch.threshold}. Lower distance means a closer match.</small><div>Review the image and identity before continuing.</div><div class="result-actions"><button class="button confirm" id="confirm-match">Send to review queue</button><button class="button reject" id="reject-match">Reject suggestion</button></div>`;
     $('#confirm-match').onclick=()=>record(true); $('#reject-match').onclick=()=>{currentMatch=null;result.innerHTML='<strong>Suggestion rejected</strong><small>No attendance record was created.</small>';};
   } catch(err){result.innerHTML=`<strong>Could not complete match</strong><small>${escapeHtml(err.message)}</small>`;}
   finally{button.disabled=false;}
@@ -58,5 +58,18 @@ document.addEventListener('click',async e=>{
   if(e.target.matches('[data-review]')){try{await api(`/api/attendance/${e.target.dataset.id}/review`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({decision:e.target.dataset.review})});await refresh();}catch(err){alert(err.message);}}
 });
 $('#refresh').addEventListener('click',refresh);
+async function refreshModelStatus(){
+  const indicator=$('#model-status');
+  try{
+    const health=await api('/api/health');
+    indicator.className=`model-status ${health.model_ready?'ready':'missing'}`;
+    indicator.lastChild.textContent=health.model_ready?'Weights detected':'Model setup required';
+  }catch{
+    indicator.className='model-status error';
+    indicator.lastChild.textContent='Service unavailable';
+  }
+}
 function escapeHtml(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 refresh();
+refreshModelStatus();
+setInterval(refreshModelStatus,30000);
