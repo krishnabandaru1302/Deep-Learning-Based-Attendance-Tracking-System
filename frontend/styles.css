@@ -32,6 +32,8 @@ button, input { font: inherit; }
 .model-status i, .local-dot { width: 7px; height: 7px; display: inline-block; border-radius: 50%; background: #e1a253; }
 .model-status.ready i { background: #49a77d; }
 .model-status.error i { background: #d9685c; }
+.camera-mode { display: inline-flex; align-items: center; gap: 6px; padding: 6px 9px; border: 1px solid #e7e7e1; border-radius: 999px; color: #737b81; background: #fff; font-size: 9px; }
+.camera-dot { width: 6px; height: 6px; border-radius: 50%; background: #91a0b5; }
 .environment { padding: 7px 10px; border-radius: 999px; color: #768172; background: #f0f4ec; font-size: 10px; }
 .local-dot { width: 6px; height: 6px; margin-right: 5px; background: #6fa483; }
 .shell { width: min(1160px, calc(100% - 52px)); margin: 0 auto; padding: 30px 0 18px; }
@@ -177,6 +179,7 @@ footer { display: flex; justify-content: space-between; align-items: center; gap
   .topbar-right { gap: 8px; }
   .environment { padding: 6px 8px; font-size: 8px; }
   .model-status { font-size: 9px; }
+  .camera-mode { padding: 6px 7px; font-size: 8px; }
   .shell { width: min(100% - 28px,500px); padding-top: 15px; }
   .hero { min-height: 0; grid-template-columns: 1fr; border-radius: 18px; }
   .hero-copy { padding: 26px 22px 8px; }
