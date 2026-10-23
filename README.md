@@ -4,40 +4,43 @@ A local-first attendance research prototype with a web interface and a modular c
 
 > **Research prototype only.** The recognition threshold has not been validated, and this repository contains no benchmark or fairness evaluation. Do not use the system as the sole basis for attendance, access, employment, education, or other consequential decisions.
 
-## Start the app
+## Install with Docker
 
-### Requirements
+The Docker Compose setup is the easiest way to run the interface and API together. Install Docker Desktop, then from the repository root:
 
-- Python 3.10
-- VGGFace pretrained weights compatible with the model in `backend/app/recognition.py`
-- The weights file `models/vgg_face_weights.h5` (not included in Git)
+```bash
+cp .env.example .env
+python3 -m pip install kaggle
+# Configure Kaggle credentials using Kaggle's supported credential setup.
+./scripts/download-model.sh
+docker compose up --build
+```
 
-The original Colab implementation and notebook history are in [`AAS_v3.ipynb`](AAS_v3.ipynb). This web app is a separate modular implementation.
+Open <http://127.0.0.1:8000>. The service binds to localhost. The model weights are downloaded separately and mounted read-only; they are not included in the repository. The application data persists in a Docker volume. **Do not run `docker compose down -v` unless you intend to permanently delete the local attendance database.**
+
+You can change the local port and candidate cutoff in `.env`. The cutoff defaults to 0.35 from the original notebook and is unvalidated. Keep the default network binding on localhost. The app has no authentication and is not suitable for network exposure or multi-user deployment.
+
+## Run from Python
+
+Python 3.10 and the same model weights are required:
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate       # Windows: .venv\Scripts\activate
+source .venv/bin/activate       # Windows: .venv\\Scripts\\activate
 pip install -r backend/requirements.txt
-mkdir -p models
-# Configure Kaggle credentials in your shell, then download the original notebook's weights:
-pip install kaggle
-kaggle datasets download -d acharyarupak391/vggfaceweights --unzip -p models
-# Ensure the extracted file is named models/vgg_face_weights.h5
 uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-The weights are not committed. The Kaggle CLI requires an account and authorized API credentials; follow Kaggle's credential setup and keep the credentials outside the repository.
+Download weights with the Kaggle CLI as described above before using recognition. Open <http://127.0.0.1:8000>.
 
-Open <http://127.0.0.1:8000>. Keep the server bound to localhost. The app has no authentication and is not suitable for network exposure or multi-user deployment.
-
-### Workflow
+## Workflow
 
 1. Enroll each participant using a consented image containing one clear face.
 2. Upload a one-face image to request a candidate match.
-3. Review the suggested identity and decide whether to create an attendance entry.
-4. Confirm or reject the pending entry in the review queue.
+3. Review the displayed image and suggested identity before sending a candidate to the attendance review queue.
+4. Confirm or reject the pending entry in the queue.
 
-The app stores face embeddings and attendance records in a local SQLite database under `data/`. It does not save uploaded image files. Deleting a participant removes that participant's attendance records and embedding.
+The app stores face embeddings and attendance records in a local SQLite database. It does not save uploaded image files. Deleting a participant removes that participant's attendance records and embedding.
 
 ## Project structure
 
@@ -45,8 +48,8 @@ The app stores face embeddings and attendance records in a local SQLite database
 backend/app/       FastAPI routes, SQLite storage, model inference, settings
 frontend/          Static HTML, CSS, and JavaScript interface
 research/          Evaluation protocol and research notes
+scripts/           Local setup helpers
 models/            Local model weights (excluded from Git)
-data/              Local embeddings and attendance database (excluded from Git)
 AAS_v3.ipynb       Original Colab research prototype
 ```
 
@@ -56,6 +59,7 @@ The backend separates HTTP handling (`main.py`), persistence (`storage.py`), inf
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
+| `APP_PORT` | `8000` | Host port for the local web app when using Compose |
 | `ATTENDANCE_DATA_DIR` | `./data` | Location for the SQLite database |
 | `VGGFACE_WEIGHTS` | `./models/vgg_face_weights.h5` | Path to authorized pretrained weights |
 | `MATCH_DISTANCE_THRESHOLD` | `0.35` | Cosine-distance candidate cutoff inherited from the notebook; unvalidated |
