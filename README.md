@@ -1,6 +1,6 @@
 # Attendance Console
 
-A local-first attendance workspace with a web interface and a modular computer-vision backend. It uses a Haar cascade for face detection and a VGGFace descriptor model to suggest candidate matches. Every check-in remains subject to human review.
+A local-first lecture hall attendance system. A scheduled class session has configurable arrival, early-departure, and return grace periods. The backend records timestamped `entry` and `exit` events, derives attendance states, and keeps an event log for the class roster.
 
 > **Research prototype only.** The recognition threshold has not been validated, and this repository contains no benchmark or fairness evaluation. Do not use the system as the sole basis for attendance, access, employment, education, or other consequential decisions.
 
@@ -33,14 +33,16 @@ uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
 
 Download weights with the Kaggle CLI as described above before using recognition. Open <http://127.0.0.1:8000>.
 
-## Workflow
+## Current workflow and camera status
 
-1. Enroll each participant using a consented image containing one clear face.
-2. Upload a one-face image to request a candidate match.
-3. Review the displayed image and suggested identity before sending a candidate to the attendance review queue.
-4. Confirm or reject the pending entry in the queue.
+1. Add participants and their consented reference photos to the class roster.
+2. Set the class name, room, schedule, and timing rules, then start the session.
+3. A camera worker should identify a face at a configured doorway crossing and send an `entry` or `exit` event to the backend. The event API deduplicates repeated transitions and stores event time, camera id, and match distance.
+4. The session policy classifies arrival after `scheduled_start + late_grace_minutes` as late. An exit within `early_leave_grace_minutes` of scheduled end is not marked early. A return within `return_grace_minutes` is treated as a brief break; longer breaks are counted for instructor review.
 
-The app stores face embeddings and attendance records in a local SQLite database. It does not save uploaded image files. Deleting a participant removes that participant's attendance records and embedding.
+**The camera worker is not implemented yet.** This build has the session, settings, attendance-state, and event-log APIs, but it does not connect to an RTSP feed or automatically detect doorway crossings. The interface reports the camera as offline and does not claim that attendance is being captured. The existing Haar detector expects one face in an image and is not a whole-room, multi-face camera pipeline.
+
+The app stores face embeddings, session rules, event timestamps, and attendance records in a local SQLite database. Uploaded reference images are processed in memory and not retained. Deleting a participant removes their local records.
 
 ## Project structure
 
@@ -53,7 +55,7 @@ models/            Local model weights (excluded from Git)
 AAS_v3.ipynb       Original Colab research prototype
 ```
 
-The backend separates HTTP handling (`main.py`), persistence (`storage.py`), inference and matching (`recognition.py`), and configuration (`settings.py`).
+The backend separates HTTP handling (`main.py`), persistence and event state (`storage.py`), inference (`recognition.py`), and configuration (`settings.py`). The camera worker will be a separate component that emits the documented event contract; it must not write directly to the attendance database.
 
 ## Configuration
 
@@ -63,6 +65,7 @@ The backend separates HTTP handling (`main.py`), persistence (`storage.py`), inf
 | `ATTENDANCE_DATA_DIR` | `./data` | Location for the SQLite database |
 | `VGGFACE_WEIGHTS` | `./models/vgg_face_weights.h5` | Path to authorized pretrained weights |
 | `MATCH_DISTANCE_THRESHOLD` | `0.35` | Cosine-distance candidate cutoff inherited from the notebook; unvalidated |
+| `CAMERA_RTSP_URL` | unset | Local camera stream source for the future room-camera worker; the current build does not consume the stream |
 
 Do not commit weights, participant images, embeddings, attendance exports, secrets, or private datasets. The `.gitignore` excludes local model and data files.
 
@@ -70,7 +73,7 @@ Do not commit weights, participant images, embeddings, attendance exports, secre
 
 See [`research/README.md`](research/README.md) for an evaluation protocol. No performance results are currently available. Before reporting results, document dataset provenance and consent, held-out splits, preprocessing, model and weight provenance, threshold selection, false acceptance and rejection rates, precision and recall, and uncertainty.
 
-Face embeddings are sensitive biometric data. Obtain informed consent, limit access and retention, provide a non-biometric alternative, and have a person review every match. This prototype is not hardened: it has no authentication, authorization, audit controls, rate limiting, or deployment security review.
+Face embeddings are sensitive biometric data. Obtain informed consent, limit access and retention, provide a non-biometric alternative, and review ambiguous or low-confidence events. This local build is not hardened: it has no instructor authentication or authorization, camera-worker credentials, rate limiting, or deployment security review. Keep it bound to localhost and do not expose its APIs to a network.
 
 ## License
 
