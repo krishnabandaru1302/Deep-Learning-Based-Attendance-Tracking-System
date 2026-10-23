@@ -52,12 +52,11 @@ async function refresh(){
     $('#people-count').textContent=people.length;
     $('#people-stat').textContent=people.length;
     $('#pending-count').textContent=records.filter(record=>record.review_status==='pending').length;
-    $('#last-updated').textContent=new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});
     $('#people-list').className='list'+(people.length?'':' empty');
     $('#people-list').innerHTML=people.length?people.map(p=>`<div class="row"><span>${escapeHtml(p.display_name)}<small>Added ${new Date(p.created_at).toLocaleDateString()}</small></span><button data-delete="${p.id}">Delete</button></div>`).join(''):'No participants enrolled yet.';
     $('#attendance-list').className='list'+(records.length?'':' empty');
     $('#attendance-list').innerHTML=records.length?records.map(r=>`<div class="row"><span>${escapeHtml(r.display_name)}<small>${new Date(r.observed_at).toLocaleString()} · distance ${Number(r.distance).toFixed(3)}</small></span>${r.review_status==='pending'?`<span class="result-actions"><button class="button confirm" data-review="confirmed" data-id="${r.id}">Confirm</button><button class="button reject" data-review="rejected" data-id="${r.id}">Reject</button></span>`:`<span class="badge">${escapeHtml(r.review_status)}</span>`}</div>`).join(''):'No attendance records yet.';
-  }catch(err){$('#people-list').textContent=err.message;}
+  }catch(err){$('#people-list').className='list empty';$('#people-list').textContent=`Could not load people: ${err.message}`;}
 }
 document.addEventListener('click',async e=>{
   if(e.target.matches('[data-delete]')){if(!confirm('Delete this participant and their attendance records?'))return;try{await api(`/api/people/${e.target.dataset.delete}`,{method:'DELETE'});await refresh();}catch(err){alert(err.message);}}
@@ -70,10 +69,9 @@ async function refreshModelStatus(){
     const health=await api('/api/health');
     modelReady=health.model_ready;
     indicator.className=`model-status ${health.model_ready?'ready':'missing'}`;
-    const labels={ready:'Model ready',dependencies_missing:'Setup required',weights_missing:'Weights required'};
-    const details={dependencies_missing:['Recognition isn’t configured','Install the recognition dependencies to enable image-based actions.'],weights_missing:['Model weights are missing','Add the VGGFace weights to enable enrollment and check-ins.']};
+    const labels={ready:'Photo matching ready',dependencies_missing:'Finish setup',weights_missing:'Finish setup'};
+    const details={dependencies_missing:['One quick setup step','The photo-matching tools need to be installed before you can add people or take attendance.'],weights_missing:['Turn on photo matching','The matching files aren’t installed yet. Follow the setup steps to add people and take attendance.']};
     indicator.lastChild.textContent=labels[health.model_state]||'Model unavailable';
-    $('#model-summary').textContent=labels[health.model_state]||'Unavailable';
     const notice=$('#setup-notice');
     notice.classList.toggle('hidden',modelReady);
     if(!modelReady){const [title,copy]=details[health.model_state]||['Recognition is unavailable','Check that the local service is running.'];$('#setup-title').textContent=title;$('#setup-copy').textContent=copy;}
@@ -81,10 +79,9 @@ async function refreshModelStatus(){
     modelReady=false;
     indicator.className='model-status error';
     indicator.lastChild.textContent='Service unavailable';
-    $('#model-summary').textContent='Unavailable';
     $('#setup-notice').classList.remove('hidden');
     $('#setup-title').textContent='Service unavailable';
-    $('#setup-copy').textContent='Check that the local attendance service is running.';
+    $('#setup-copy').textContent='We can’t reach the attendance service right now. Check that it’s running, then refresh this page.';
   }
   document.querySelectorAll('#enroll-form .primary, #match-form .primary').forEach(button=>{
     button.disabled=!modelReady;
