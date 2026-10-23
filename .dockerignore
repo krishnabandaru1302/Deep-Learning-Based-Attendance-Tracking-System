@@ -1,0 +1,9 @@
+.git
+.venv
+__pycache__
+*.py[cod]
+.env
+data
+models/*.h5
+*.sqlite3
+*.ipynb
