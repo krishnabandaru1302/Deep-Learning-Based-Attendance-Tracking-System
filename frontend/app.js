@@ -7,8 +7,9 @@ const api = async (url, options = {}) => {
   return body;
 };
 const fileLabel = (input, target) => { $(target).textContent = input.files[0]?.name || 'No image selected'; };
-$('#enroll-image').addEventListener('change', e => fileLabel(e.target, '#enroll-file'));
-$('#match-image').addEventListener('change', e => fileLabel(e.target, '#match-file'));
+const preview = (input, target) => { const img=$(target); if(img.dataset.url)URL.revokeObjectURL(img.dataset.url); if(input.files[0]){img.dataset.url=URL.createObjectURL(input.files[0]);img.src=img.dataset.url;img.classList.remove('hidden');}else{img.removeAttribute('src');img.classList.add('hidden');} };
+$('#enroll-image').addEventListener('change', e => {fileLabel(e.target, '#enroll-file');preview(e.target,'#enroll-preview');});
+$('#match-image').addEventListener('change', e => {fileLabel(e.target, '#match-file');preview(e.target,'#match-preview');});
 
 $('#enroll-form').addEventListener('submit', async e => {
   e.preventDefault();
