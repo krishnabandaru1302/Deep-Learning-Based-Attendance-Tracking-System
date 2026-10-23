@@ -1,50 +1,68 @@
-# Deep Learning-Based Attendance Tracking System
+# Research Attendance
 
-A Google Colab prototype that detects faces in enrollment images, represents them with a pretrained VGGFace model, and matches faces from an uploaded image to mark attendance in an Excel workbook.
+A local-first attendance research prototype with a web interface and a modular computer-vision backend. It uses a Haar cascade for face detection and a VGGFace descriptor model for candidate matching. Every match is a suggestion and requires human review.
 
-> **Status:** research/learning prototype. The repository does not include a benchmark, validation protocol, or measured accuracy. Do not use it as the sole basis for real attendance or other consequential decisions.
+> **Research prototype only.** The recognition threshold has not been validated, and this repository contains no benchmark or fairness evaluation. Do not use the system as the sole basis for attendance, access, employment, education, or other consequential decisions.
 
-## How it works
+## Start the app
 
-The main implementation is the [AAS_v3 notebook](AAS_v3.ipynb).
+### Requirements
 
-1. Enrollment images are read from `Students/`; a Haar cascade detects faces and the notebook saves face crops under `group_of_faces/`.
-2. A VGGFace network loaded with pretrained weights produces a descriptor for each enrolled face.
-3. The notebook asks the operator to upload an image. It detects faces and compares their descriptors with enrolled descriptors using cosine distance.
-4. Matches are annotated in the output image and written with a timestamp to `Attendance_Sheet.xlsx`.
+- Python 3.10
+- VGGFace pretrained weights compatible with the model in `backend/app/recognition.py`
+- The weights file `models/vgg_face_weights.h5` (not included in Git)
 
-The notebook uses a distance cutoff of 0.35. This value is an implementation setting, not a validated operating threshold; performance can vary with image quality, pose, lighting, and the people represented in the enrollment images.
+The original Colab implementation and notebook history are in [`AAS_v3.ipynb`](AAS_v3.ipynb). This web app is a separate modular implementation.
 
-## Run in Google Colab
+```bash
+python -m venv .venv
+source .venv/bin/activate       # Windows: .venv\Scripts\activate
+pip install -r backend/requirements.txt
+mkdir -p models
+# Place the authorized VGGFace weights at models/vgg_face_weights.h5
+uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
+```
 
-This project is currently organized as a Colab notebook and depends on files and paths that are not fully configured for a clean local install.
+Open <http://127.0.0.1:8000>. Keep the server bound to localhost. The app has no authentication and is not suitable for network exposure or multi-user deployment.
 
-1. Open [AAS_v3.ipynb](AAS_v3.ipynb) in Google Colab.
-2. Place the repository files in Google Drive under `My Drive/Projects/Automated Attendance System`, matching the path used by the notebook, or update the working-directory cell to match your own location.
-3. Add consented enrollment images to the notebook's `Students/` directory. The notebook expects the Haar cascade XML files in its working directory.
-4. Run the cells in order. The notebook installs `keras_vggface` and downloads the VGGFace weights using the Kaggle CLI. Configure Kaggle credentials through a secure Colab secret or the official Kaggle setup; never commit API keys to the notebook or repository.
-5. Upload a test image when prompted. The notebook writes the annotated image and attendance workbook to its current working directory.
+### Workflow
 
-The notebook was authored for Google Colab. Its dependencies are not pinned, and compatibility with current Colab runtimes has not been established. A local, reproducible installation workflow is not currently provided.
+1. Enroll each participant using a consented image containing one clear face.
+2. Upload a one-face image to request a candidate match.
+3. Review the suggested identity and decide whether to create an attendance entry.
+4. Confirm or reject the pending entry in the review queue.
 
-## Repository contents
+The app stores face embeddings and attendance records in a local SQLite database under `data/`. It does not save uploaded image files. Deleting a participant removes that participant's attendance records and embedding.
 
-- `AAS_v3.ipynb` — end-to-end Colab notebook
-- Haar cascade XML files — face detection resources used by the notebook
-- `README.md` — project overview and usage notes
+## Project structure
 
-## Limitations and responsible use
+```text
+backend/app/       FastAPI routes, SQLite storage, model inference, settings
+frontend/          Static HTML, CSS, and JavaScript interface
+research/          Evaluation protocol and research notes
+models/            Local model weights (excluded from Git)
+data/              Local embeddings and attendance database (excluded from Git)
+AAS_v3.ipynb       Original Colab research prototype
+```
 
-- This is a prototype, not a production attendance system. It has no documented test set, accuracy measurements, false-match analysis, or fairness evaluation.
-- The notebook uses a fixed cosine-distance cutoff. Validate and document any threshold against representative, consented data before drawing conclusions.
-- Face images and face descriptors are sensitive biometric data. Obtain informed consent, restrict access, define retention and deletion practices, and avoid uploading identifiable images to services without authorization.
-- Provide a non-biometric attendance alternative and human review for any consequential decision.
-- The current workflow is Colab-centered and includes a hard-coded Drive path. It needs configuration, dependency pinning, and error handling before it can be considered reproducible.
+The backend separates HTTP handling (`main.py`), persistence (`storage.py`), inference and matching (`recognition.py`), and configuration (`settings.py`).
 
-## Research notes
+## Configuration
 
-To make this project suitable for research evaluation, document the enrollment and test protocol, dataset provenance and consent, preprocessing choices, threshold selection, and metrics such as precision, recall, false acceptance rate, and false rejection rate. Report results on a held-out evaluation set; do not infer accuracy from a successful demo run.
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `ATTENDANCE_DATA_DIR` | `./data` | Location for the SQLite database |
+| `VGGFACE_WEIGHTS` | `./models/vgg_face_weights.h5` | Path to authorized pretrained weights |
+| `MATCH_DISTANCE_THRESHOLD` | `0.35` | Cosine-distance candidate cutoff inherited from the notebook; unvalidated |
+
+Do not commit weights, participant images, embeddings, attendance exports, secrets, or private datasets. The `.gitignore` excludes local model and data files.
+
+## Research and limitations
+
+See [`research/README.md`](research/README.md) for an evaluation protocol. No performance results are currently available. Before reporting results, document dataset provenance and consent, held-out splits, preprocessing, model and weight provenance, threshold selection, false acceptance and rejection rates, precision and recall, and uncertainty.
+
+Face embeddings are sensitive biometric data. Obtain informed consent, limit access and retention, provide a non-biometric alternative, and have a person review every match. This prototype is not hardened: it has no authentication, authorization, audit controls, rate limiting, or deployment security review.
 
 ## License
 
-No license file is currently documented in this repository. Add a license before inviting reuse or contributions.
+No license is currently documented. Add a license before inviting reuse or contributions.
