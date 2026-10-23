@@ -19,9 +19,14 @@ python -m venv .venv
 source .venv/bin/activate       # Windows: .venv\Scripts\activate
 pip install -r backend/requirements.txt
 mkdir -p models
-# Place the authorized VGGFace weights at models/vgg_face_weights.h5
+# Configure Kaggle credentials in your shell, then download the original notebook's weights:
+pip install kaggle
+kaggle datasets download -d acharyarupak391/vggfaceweights --unzip -p models
+# Ensure the extracted file is named models/vgg_face_weights.h5
 uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
 ```
+
+The weights are not committed. The Kaggle CLI requires an account and authorized API credentials; follow Kaggle's credential setup and keep the credentials outside the repository.
 
 Open <http://127.0.0.1:8000>. Keep the server bound to localhost. The app has no authentication and is not suitable for network exposure or multi-user deployment.
 
