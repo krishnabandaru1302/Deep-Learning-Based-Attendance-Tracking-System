@@ -1,14 +1,24 @@
 import json
 import sqlite3
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from .settings import DATA_DIR, DB_PATH
 
 
+@contextmanager
 def connect():
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     db = sqlite3.connect(DB_PATH)
     db.row_factory = sqlite3.Row
-    return db
+    db.execute("PRAGMA foreign_keys=ON")
+    try:
+        yield db
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
+    finally:
+        db.close()
 
 
 def initialize():
