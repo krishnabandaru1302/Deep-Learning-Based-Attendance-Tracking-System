@@ -1,88 +1,87 @@
-# Deep Learning-Based Attendance Tracking System
-# Description
-The Deep Learning-Based Attendance Tracking System leverages the power of Deep learning, computer vision and one-shot learning method for recognizing individuals from a single sample image and automates the process of attendance marking.The system uses transfer learning by building the model upon the pre-trained VGGFace model, extending its capabilities to suit the specific needs of an attendance system, offering the capability to detect and recognize multiple faces in an image. The recognized faces are then cross-referenced with an existing database, and the attendance is marked with a timestamp in an Excel sheet.
+# Attendance Console
 
-# Dependencies
-- OpenCV
-- TensorFlow
-- Keras
-- openpyxl
-- PIL
-- ipywidgets
-- numpy
+A local-first lecture hall attendance system. A scheduled class session has configurable arrival, early-departure, and return grace periods. The backend records timestamped `entry` and `exit` events, derives attendance states, and keeps an event log for the class roster.
 
-# Important Notes
-- Image Collection: The system will automatically mount your Google Drive and set up the working directory. It will then collect images from the specified directory and extract faces from them.
-- Face Processing: The extracted faces are processed and their representations are computed using the VGGFace model.
-- Image Capture: The system will capture an image using the webcam. The captured image is processed, and faces in the image are detected.
-- Face Recognition: The detected faces are recognized by comparing their representations with the ones computed earlier.
-- Attendance Marking: If a match is found, the system will mark the attendance of the recognized person in an Excel sheet with the current timestamp.
+> **Implementation status: local MVP.** Session rules, event storage, and an initial RTSP camera worker are implemented. Recognition accuracy, doorway tracking, and false-match rates have not been validated on classroom footage. Do not rely on automated marks for official attendance until the camera-specific evaluation, instructor access controls, and a correction process are in place.
 
+## Install with Docker
 
-## Appendix
+The Docker Compose setup is the easiest way to run the interface and API together. Install Docker Desktop, then from the repository root:
 
-This section provides additional information and resources that can help you understand and use the Automated Attendance System more effectively.
+```bash
+cp .env.example .env
+python3 -m pip install kaggle
+# Configure Kaggle credentials using Kaggle's supported credential setup.
+bash scripts/download-model.sh
+docker compose up --build
+```
 
-- Face Recognition:
-    Face recognition is a method of identifying or verifying the identity of an individual using their face. It captures, analyzes, and compares patterns based on the person's facial details. The face detection process is an essential and crucial step in face recognition, and it's used to locate human faces in images. This process involves identifying the features (eyes, nose, mouth, etc.) and the geometry of the face.
+Open <http://127.0.0.1:8000>. The service binds to localhost. The model weights are downloaded separately and mounted read-only; they are not included in the repository. The application data persists in a Docker volume. **Do not run `docker compose down -v` unless you intend to permanently delete the local attendance database.**
 
--  VGGFace Model:
-    VGGFace is a pre-trained deep learning model that is specifically designed for face recognition tasks. It's based on the VGG16 architecture and trained on a large dataset of faces. The model can be used to generate a vector representation (embedding) of a face, which can then be compared to the embeddings of other faces to determine their identity.
+You can change the local port and candidate cutoff in `.env`. The cutoff defaults to 0.35 from the original notebook and is unvalidated. Keep the default network binding on localhost. The app has no authentication and is not suitable for network exposure or multi-user deployment.
 
-- Code:
-    The code for this project is written in Python and uses the TensorFlow and Keras libraries to implement the deep learning model. The OpenCV library is used for image processing tasks, and the openpyxl library is used to write the attendance data to an Excel file.
+## Run from Python
 
-- Troubleshooting:
+Python 3.10–3.13 and the same model weights are required. Python 3.13 is recommended for Apple Silicon:
 
-    If you encounter any issues while running the project, here are a few things you can try:
-    - Make sure all the dependencies are installed correctly.
-    - If running on Google Colab, make sure the runtime is connected. please note that Google Colab does not support access to the webcam for capturing images. As a result, you will need to provide the input images manually.
-    - If you're running the project locally and the webcam capture isn't working, make sure your Python environment has access to your webcam.
-## Features
+```bash
+python3.13 -m venv .venv
+source .venv/bin/activate       # Windows: .venv\\Scripts\\activate
+pip install -r backend/requirements.txt
+uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
+```
 
-- Face Recognition
-- Multi-Face Handling
-- Versatile Recognition (Can recognize both frontal and profile faces)
-- Automated Attendance Marking (Marks attendance with a timestamp in an Excel sheet automatically.)
+Download weights with the Kaggle CLI as described above before using recognition. Open <http://127.0.0.1:8000>.
 
-## Output
+## Current workflow and camera status
 
-![Detected faces](https://github.com/krishna-bbsm/Deep-Learning-Based-Attendance-Tracking-System/blob/3ba1426a26e5f232e3907f44f85286ec9266d78a/output_image.jpg)
+1. Add participants and their consented reference photos to the class roster.
+2. Set the class name, room, schedule, and timing rules, then start the session.
+3. With an RTSP camera and model weights configured, the background camera worker identifies stable face tracks crossing the configured doorway line and records `entry` or `exit` events automatically. The backend deduplicates repeated transitions and stores event time, camera id, and match distance.
+4. The session policy classifies arrival after `scheduled_start + late_grace_minutes` as late. An exit within `early_leave_grace_minutes` of scheduled end is not marked early. A return within `return_grace_minutes` is treated as a brief break; longer breaks are counted for instructor review.
 
-## Attendace Sheet
+The RTSP camera worker and event pipeline are implemented, but have not been validated against a physical classroom camera. Configure a local `CAMERA_RTSP_URL`, install the VGGFace weights, and tune the entrance line and direction before expecting capture. The interface reports the camera as offline until the worker successfully opens the stream. The current face detector/tracker is an initial doorway implementation, not a validated crowded-room identity system; it does not infer presence from a wide seating-area frame.
 
-[Download Attendace Sheet](https://github.com/krishna-bbsm/Deep-Learning-Based-Attendance-Tracking-System/blob/main/Attendance_Sheet.xlsx)
+The app stores face embeddings, session rules, event timestamps, and attendance records in a local SQLite database. Uploaded reference images are processed in memory and not retained. Deleting a participant removes their local records.
 
+## Project structure
 
-## Built
+```text
+backend/app/       FastAPI routes, SQLite storage, camera worker, session engine
+frontend/          Static HTML, CSS, and JavaScript interface
+research/          Evaluation protocol and research notes
+scripts/           Local setup helpers
+models/            Local model weights (excluded from Git)
+AAS_v3.ipynb       Original Colab research prototype
+```
 
-[![Code: Python](https://img.shields.io/badge/Made%20with-Python-3776AB.svg)](https://shields.io/)
+The backend separates HTTP handling (`main.py`), persistence (`storage.py`), face inference (`recognition.py`), the RTSP reader (`camera.py`), session policy (`session_engine.py`), and configuration (`settings.py`). The worker passes events through the session engine rather than writing directly to SQLite.
+
+## Configuration
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `APP_PORT` | `8000` | Host port for the local web app when using Compose |
+| `ATTENDANCE_DATA_DIR` | `./data` | Location for the SQLite database |
+| `VGGFACE_WEIGHTS` | `./models/vgg_face_weights.h5` | Path to authorized pretrained weights |
+| `MATCH_DISTANCE_THRESHOLD` | `0.35` | Cosine-distance candidate cutoff inherited from the notebook; unvalidated |
+| `CAMERA_RTSP_URL` | unset | Local RTSP stream source consumed by the room-camera worker |
+| `CAMERA_ID` | `lecture-hall-a-door` | Identifier included in camera event records |
+| `CAMERA_DOOR_LINE_X` | `0.5` | Normalized horizontal crossing line in the camera frame (0–1) |
+| `CAMERA_ENTRY_DIRECTION` | `right` | Whether movement to the right or left represents entry into the room |
+| `CAMERA_SAMPLE_INTERVAL` | `0.5` | Seconds between analyzed frames |
+| `CAMERA_TRACK_TIMEOUT` | `4` | Seconds before a temporarily lost face track is discarded |
+| `CAMERA_TRACK_MAX_X_GAP` | `0.15` | Maximum normalized horizontal movement used to associate detections |
+| `CAMERA_MATCH_STREAK` | `3` | Consecutive stable matches required before recording a crossing |
+
+Do not commit weights, participant images, embeddings, attendance exports, secrets, or private datasets. The `.gitignore` excludes local model and data files.
+
+## Research and limitations
+
+See [`research/README.md`](research/README.md) for an evaluation protocol. No performance results are currently available. Before reporting results, document dataset provenance and consent, held-out splits, preprocessing, model and weight provenance, threshold selection, false acceptance and rejection rates, precision and recall, and uncertainty.
+
+Face embeddings are sensitive biometric data. Obtain informed consent, limit access and retention, provide a non-biometric alternative, and review ambiguous or low-confidence events. This local build is not hardened: it has no instructor authentication or authorization, camera-worker credentials, rate limiting, or deployment security review. Keep it bound to localhost and do not expose its APIs to a network.
 
 ## License
 
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
-
-## Development Environment
-
-This project is developed and run in Google Colab, a cloud-based Jupyter notebook environment that provides access to computing resources, but  also it can be modified to run on a local environment.
-    
-## Documentation
-
-[Documentation](https://github.com/krishna-bbsm/Automated_Attendance_System/blob/main/README.md)
-
-
-## Authors
-
-- [@KrishnaBandaru](https://www.github.com/octokatherine)
-
-
-
-
-
-# Hi, I'm Krishna Bandaru! 👋
-
-
-
-If you have any feedback, 
-please reach out to me at krishna.bbsm@gmail.com
-
+No license is currently documented. Add a license before inviting reuse or contributions.

@@ -1,0 +1,24 @@
+services:
+  attendance:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${APP_PORT:-8000}:8000"
+    environment:
+      ATTENDANCE_DATA_DIR: /app/data
+      VGGFACE_WEIGHTS: /app/models/vgg_face_weights.h5
+      MATCH_DISTANCE_THRESHOLD: ${MATCH_DISTANCE_THRESHOLD:-0.35}
+      CAMERA_RTSP_URL: ${CAMERA_RTSP_URL:-}
+      CAMERA_ID: ${CAMERA_ID:-lecture-hall-a-door}
+      CAMERA_DOOR_LINE_X: ${CAMERA_DOOR_LINE_X:-0.5}
+      CAMERA_ENTRY_DIRECTION: ${CAMERA_ENTRY_DIRECTION:-right}
+      CAMERA_SAMPLE_INTERVAL: ${CAMERA_SAMPLE_INTERVAL:-0.5}
+      CAMERA_TRACK_TIMEOUT: ${CAMERA_TRACK_TIMEOUT:-4}
+      CAMERA_TRACK_MAX_X_GAP: ${CAMERA_TRACK_MAX_X_GAP:-0.15}
+      CAMERA_MATCH_STREAK: ${CAMERA_MATCH_STREAK:-3}
+    volumes:
+      - attendance-data:/app/data
+      - ./models:/app/models:ro
+
+volumes:
+  attendance-data:

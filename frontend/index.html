@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f6f8">
+  <meta name="description" content="Lecture hall attendance operations and session settings.">
+  <title>Attendance · Lecture Hall A</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Attendance home"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5 9.5 17 19 7.5"/></svg></span><span>Attendance</span></a>
+    <nav class="topnav" aria-label="Main navigation"><a class="active" href="#session-panel">Session</a><a href="#class-roster">Class roster</a><a href="#event-log">Event log</a></nav>
+    <div class="topbar-right"><span class="camera-mode" id="camera-status"><i></i><span>Checking camera</span></span><span class="model-status" id="model-status"><i></i><span>Checking model</span></span></div>
+  </header>
+
+  <main class="shell">
+    <div class="page-heading"><div><div class="crumb">Attendance <span>/</span> Rooms <span>/</span> <b>Lecture Hall A</b></div><h1>Lecture Hall A</h1><p>Session controls, attendance events, and class rules.</p></div><span class="session-badge" id="session-badge"><i></i> No active session</span></div>
+
+    <section class="status-strip" id="camera-notice" aria-live="polite"><span class="notice-icon">!</span><span><strong id="camera-notice-title">Camera service is not connected</strong><small id="camera-notice-copy">Automatic entry and exit logging is paused until a room camera worker is configured.</small></span><span class="notice-mode">LOCAL SERVICE</span></section>
+
+    <div class="dashboard-grid">
+      <section class="panel session-panel" id="session-panel">
+        <div class="panel-heading"><div><span class="kicker">CLASS SESSION</span><h2>Session controls</h2><p>Start and end a class in this room.</p></div><span class="panel-icon calendar-icon" aria-hidden="true">▦</span></div>
+        <form id="session-form" class="session-form">
+          <label>Class name<input id="class-name" name="class_name" placeholder="e.g. Biology 201" maxlength="120" required></label>
+          <label>Room<input id="room-name" name="room_name" value="Lecture Hall A" maxlength="120" required></label>
+          <div class="time-fields"><label>Scheduled start<input id="scheduled-start" type="datetime-local" required></label><label>Scheduled end<input id="scheduled-end" type="datetime-local" required></label></div>
+          <p class="helper">Late arrivals are calculated from the scheduled start and the grace period below.</p>
+          <button class="button primary" type="submit">Start class session <span aria-hidden="true">→</span></button>
+          <p class="message" id="session-message" aria-live="polite"></p>
+        </form>
+        <div class="active-session hidden" id="active-session"><div class="active-mark"><span class="pulse"></span> SESSION IN PROGRESS</div><h3 id="active-class-name">—</h3><p id="active-session-time">—</p><div class="active-meta"><span>Room</span><strong id="active-room-name">—</strong></div><button class="button end-button" id="end-session" type="button">End class session</button><p class="message" id="end-message" aria-live="polite"></p></div>
+      </section>
+
+      <section class="panel camera-panel">
+        <div class="panel-heading"><div><span class="kicker">ROOM CAMERA</span><h2>Camera status</h2><p>Entry and exit timestamps come from doorway crossings.</p></div><span class="panel-icon camera-icon" aria-hidden="true">⌾</span></div>
+        <div class="camera-preview" aria-label="Camera setup diagram">
+          <div class="room-map"><span class="room-door">DOOR</span><span class="camera-node"><i></i> CAMERA</span><span class="field-of-view"></span><span class="seat-row row-one"><i></i><i></i><i></i><i></i></span><span class="seat-row row-two"><i></i><i></i><i></i><i></i></span><span class="seat-row row-three"><i></i><i></i><i></i><i></i></span><span class="room-label">ENTRY / EXIT ZONE</span></div>
+        </div>
+        <div class="camera-details"><div><span class="detail-label">Connection</span><strong id="camera-detail">Not configured</strong></div><div><span class="detail-label">Event source</span><strong id="camera-source">Waiting for camera worker</strong></div></div>
+        <p class="camera-guidance">Aim the view so faces are visible as people cross the entrance. A wide corner view may not capture clear identities. Set the camera source on the backend; its address and credentials stay server-side.</p>
+      </section>
+
+      <section class="panel rules-panel">
+        <div class="panel-heading"><div><span class="kicker">INSTRUCTOR SETTINGS</span><h2>Attendance rules</h2><p>Choose how much timing variation is acceptable.</p></div><span class="panel-icon rules-icon" aria-hidden="true">⚙</span></div>
+        <form id="policy-form" class="policy-form">
+          <label>Late arrival grace<span class="input-suffix"><input type="number" id="late-grace" min="0" max="120" value="10"><span>minutes</span></span><small>Arrival after class begins but within this window stays on time.</small></label>
+          <label>Early departure grace<span class="input-suffix"><input type="number" id="early-grace" min="0" max="120" value="5"><span>minutes</span></span><small>Leaving this close to the scheduled end is not marked early.</small></label>
+          <label>Return grace<span class="input-suffix"><input type="number" id="return-grace" min="0" max="240" value="10"><span>minutes</span></span><small>A short exit and return within this window is treated as a brief break.</small></label>
+          <div class="policy-footer"><span id="policy-scope">Saved rules apply to the next class session.</span><button class="button secondary" type="submit">Save rules</button></div>
+          <p class="message" id="policy-message" aria-live="polite"></p>
+        </form>
+      </section>
+
+      <section class="panel attendance-panel">
+        <div class="panel-heading"><div><span class="kicker">LIVE ROSTER</span><h2>Attendance</h2><p id="attendance-subtitle">Start a session to see entry and exit activity.</p></div><button class="button secondary small-button" id="refresh" type="button">↻ Refresh</button></div>
+        <div class="totals"><div><strong id="count-present">0</strong><span>Present</span></div><div><strong id="count-late">0</strong><span>Late</span></div><div><strong id="count-away">0</strong><span>Away</span></div><div><strong id="count-absent">0</strong><span>Not seen</span></div></div>
+        <div class="table-wrap"><table><thead><tr><th>Student</th><th>First entry</th><th>Latest event</th><th>Status</th></tr></thead><tbody id="attendance-rows"><tr><td colspan="4" class="empty-cell">No active session.</td></tr></tbody></table></div>
+      </section>
+    </div>
+
+    <section class="panel roster-panel" id="class-roster">
+      <div class="panel-heading"><div><span class="kicker">PARTICIPANTS</span><h2>Class roster</h2><p>Students available to match at this room’s camera.</p></div><span class="count" id="people-count">0</span></div>
+      <form id="enroll-form" class="enroll-form"><label>Student name<input id="person-name" name="display_name" maxlength="80" placeholder="e.g. Jamie Lee" required></label><label class="dropzone" for="enroll-image"><span>＋</span><strong>Add reference photo</strong><small>One clear face · JPEG or PNG</small></label><input class="file-input" id="enroll-image" type="file" accept="image/jpeg,image/png" required><span class="file-name" id="enroll-file">No photo selected</span><img id="enroll-preview" class="preview hidden" alt="Reference photo preview"><label class="consent"><input name="consent" value="true" type="checkbox" required><span>Consent has been obtained for this face template.</span></label><button class="button secondary" type="submit">Add to roster</button><p class="message" id="enroll-message" aria-live="polite"></p></form>
+      <div class="people-list" id="people-list"><p class="empty-cell">No students in this room’s roster.</p></div>
+    </section>
+
+    <section class="panel event-panel" id="event-log"><div class="panel-heading"><div><span class="kicker">AUDIT TRAIL</span><h2>Entry and exit events</h2><p>Timestamped room-camera events for the active class.</p></div><span class="event-count" id="event-count">0 events</span></div><div class="event-list" id="event-list"><p class="empty-cell">Camera events will appear here when the room worker is connected.</p></div></section>
+    <footer><span>Attendance · Lecture Hall A</span><span>Rules are stored by the local service. Active sessions keep a copy of their settings.</span></footer>
+  </main>
+  <script src="/static/app.js" defer></script>
+</body>
+</html>
