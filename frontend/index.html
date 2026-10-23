@@ -1,25 +1,73 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0a1020">
-  <meta name="description" content="Manage participant enrollment and review attendance check-ins in a local workspace.">
-  <title>Attendance Console</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f7f9">
+  <meta name="description" content="Manage participant enrollment and review attendance check-ins.">
+  <title>Attendance | Workspace</title>
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-  <header class="topbar"><a class="brand" href="/"><span class="brand-mark">A</span><span>Attendance Console<small>VISION WORKSPACE</small></span></a><div class="header-status"><span class="status"><i></i> Local workspace</span><span class="model-status" id="model-status"><i></i> Checking model</span></div></header>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Attendance workspace home"><span class="brand-mark">A</span><span>Attendance<small>WORKSPACE</small></span></a>
+    <div class="topbar-right"><span class="model-status" id="model-status"><i></i><span>Checking model</span></span><span class="environment">Local workspace</span></div>
+  </header>
+
   <main class="shell">
-    <section class="intro"><div><p class="eyebrow">IDENTITY · ATTENDANCE</p><h1>Attendance, with a human final say.</h1><p>Manage enrollments, review model suggestions, and keep every check-in in view.</p></div><div class="intro-mark"><span>01</span><i></i><i></i><i></i><i></i></div></section>
-    <section class="grid">
-      <article class="card"><div class="card-head"><div><p class="eyebrow">01 / ENROLLMENT</p><h2>Enroll a participant</h2></div><span class="icon">＋</span></div><p class="muted">Add a consented, front-facing image. The image is processed in memory; only the face template is saved.</p>
-        <form id="enroll-form"><label for="person-name">Participant name or label</label><input id="person-name" name="display_name" maxlength="80" placeholder="e.g. Participant 01" required><label class="dropzone" for="enroll-image"><span class="upload-icon">↑</span><strong>Select a portrait</strong><small>One face · JPEG or PNG · up to 8 MB</small></label><input class="file-input" id="enroll-image" type="file" accept="image/jpeg,image/png" required><div id="enroll-file" class="file-name">No image selected</div><img id="enroll-preview" class="preview hidden" alt="Selected enrollment image preview"><label class="consent"><input name="consent" value="true" type="checkbox" required> I confirm this participant has consented to enrollment.</label><button class="button primary" type="submit">Save enrollment <span>→</span></button></form><p id="enroll-message" class="message" aria-live="polite"></p>
+    <nav class="breadcrumb" aria-label="Breadcrumb"><span>Workspace</span><b>/</b><span>Attendance</span></nav>
+    <section class="page-heading">
+      <div><h1>Attendance</h1><p>Manage people, review check-ins and keep records up to date.</p></div>
+      <div class="sync"><span class="sync-dot"></span><span>Updated <b id="last-updated">—</b></span></div>
+    </section>
+
+    <section class="stats" aria-label="Workspace summary">
+      <article class="stat-card"><span class="stat-icon people-icon">♧</span><div><span class="stat-label">Enrolled people</span><strong id="people-stat">0</strong></div></article>
+      <article class="stat-card"><span class="stat-icon review-icon">◷</span><div><span class="stat-label">Awaiting review</span><strong id="pending-count">0</strong></div></article>
+      <article class="stat-card model-stat"><span class="stat-icon model-icon">✳</span><div><span class="stat-label">Recognition model</span><strong id="model-summary">Checking</strong></div></article>
+    </section>
+
+    <section class="setup-alert hidden" id="setup-notice" aria-live="polite">
+      <span class="alert-icon">i</span><div><strong id="setup-title">Recognition isn’t configured</strong><p id="setup-copy">Install the model dependencies and weights to enable image-based actions.</p></div>
+      <a href="https://github.com/krishnabandaru1302/Deep-Learning-Based-Attendance-Tracking-System/blob/docs/attendance-system-readme/README.md#install-with-docker" target="_blank" rel="noreferrer">Setup guide <span>↗</span></a>
+    </section>
+
+    <section class="workflows" aria-label="Attendance actions">
+      <article class="card">
+        <div class="card-heading"><div><span class="step">01</span><div><h2>Enroll a person</h2><p>Add a consented face image to the workspace.</p></div></div><span class="card-icon">＋</span></div>
+        <form id="enroll-form">
+          <label for="person-name">Name or identifier</label>
+          <input id="person-name" name="display_name" maxlength="80" placeholder="e.g. Participant 01" required>
+          <label class="dropzone" for="enroll-image"><span class="upload-symbol">↑</span><strong>Select an image</strong><small>One clear face · JPEG or PNG · 8 MB max</small></label>
+          <input class="file-input" id="enroll-image" type="file" accept="image/jpeg,image/png" required>
+          <div id="enroll-file" class="file-name">No image selected</div>
+          <img id="enroll-preview" class="preview hidden" alt="Selected enrollment image preview">
+          <label class="consent"><input name="consent" value="true" type="checkbox" required><span>I confirm this person has consented to face enrollment.</span></label>
+          <button class="button primary" type="submit">Save person <span>→</span></button>
+          <p id="enroll-message" class="message" aria-live="polite"></p>
+        </form>
       </article>
-      <article class="card"><div class="card-head"><div><p class="eyebrow">02 / CHECK-IN</p><h2>Review a check-in</h2></div><span class="icon">⌕</span></div><p class="muted">Upload a check-in image to see the closest enrolled candidate. Nothing is recorded until you confirm.</p>
-        <form id="match-form"><label class="dropzone" for="match-image"><span class="upload-icon">↑</span><strong>Select a check-in image</strong><small>One detectable face · JPEG or PNG</small></label><input class="file-input" id="match-image" type="file" accept="image/jpeg,image/png" required><div id="match-file" class="file-name">No image selected</div><img id="match-preview" class="preview hidden" alt="Selected image for attendance review"><button class="button primary" type="submit">Find candidate <span>→</span></button></form><div id="match-result" class="result hidden" aria-live="polite"></div>
+
+      <article class="card">
+        <div class="card-heading"><div><span class="step">02</span><div><h2>Review a check-in</h2><p>Check the suggested identity before recording attendance.</p></div></div><span class="card-icon check-icon">⌕</span></div>
+        <form id="match-form">
+          <label class="dropzone match-dropzone" for="match-image"><span class="upload-symbol">↑</span><strong>Select a check-in image</strong><small>One detectable face · JPEG or PNG · 8 MB max</small></label>
+          <input class="file-input" id="match-image" type="file" accept="image/jpeg,image/png" required>
+          <div id="match-file" class="file-name">No image selected</div>
+          <img id="match-preview" class="preview hidden" alt="Selected image for attendance review">
+          <div class="human-review"><span class="review-check">✓</span><span>Every suggested match is reviewed before it enters the attendance log.</span></div>
+          <button class="button primary" type="submit">Find a person <span>→</span></button>
+        </form>
+        <div id="match-result" class="result hidden" aria-live="polite"></div>
       </article>
     </section>
-    <section class="card roster"><div class="card-head"><div><p class="eyebrow">WORKSPACE</p><h2>People &amp; attendance</h2></div><button class="button secondary" id="refresh"><span>↻</span> Refresh</button></div><div class="columns"><div><h3>Enrolled people <span id="people-count" class="count">0</span></h3><div id="people-list" class="list empty">No people enrolled yet.</div></div><div><h3>Pending review <span class="live-dot"></span></h3><div id="attendance-list" class="list empty">No check-ins to review.</div></div></div></section>
-    <footer><span>Local research build</span><span>Face templates are sensitive data. Obtain consent and remove records when no longer needed.</span></footer>
-  </main><script src="/static/app.js" defer></script>
-</body></html>
+
+    <section class="records" aria-label="Workspace records">
+      <article class="card record-card"><div class="record-heading"><div><h2>People</h2><p>Participants enrolled in this workspace.</p></div><span class="count" id="people-count">0</span></div><div id="people-list" class="list empty">No people enrolled yet.</div></article>
+      <article class="card record-card"><div class="record-heading"><div><h2>Review queue</h2><p>Check each entry before confirming attendance.</p></div><button class="button secondary" id="refresh"><span>↻</span> Refresh</button></div><div id="attendance-list" class="list empty">No check-ins to review.</div></article>
+    </section>
+    <footer><span>Local workspace</span><span>Face templates are sensitive. Use consented images and remove records when no longer needed.</span></footer>
+  </main>
+  <script src="/static/app.js" defer></script>
+</body>
+</html>
