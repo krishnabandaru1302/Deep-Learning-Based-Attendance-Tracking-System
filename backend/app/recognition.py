@@ -15,9 +15,11 @@ def _descriptor_model():
         raise RuntimeError(f"VGGFace weights not found at {WEIGHTS_PATH}. See the setup guide.")
     m = Sequential(name="vggface_vgg16")
     m.add(ZeroPadding2D((1, 1), input_shape=(224, 224, 3)))
-    for filters, count in ((64, 2), (128, 2), (256, 3), (512, 3), (512, 3)):
-        for _ in range(count):
-            m.add(ZeroPadding2D((1, 1)))
+    for block, (filters, count) in enumerate(((64, 2), (128, 2), (256, 3), (512, 3), (512, 3))):
+        for layer in range(count):
+            # The input padding above is the first convolution's padding.
+            if block > 0 or layer > 0:
+                m.add(ZeroPadding2D((1, 1)))
             m.add(Convolution2D(filters, (3, 3), activation="relu"))
         m.add(MaxPooling2D((2, 2), strides=(2, 2)))
     m.add(Convolution2D(4096, (7, 7), activation="relu"))
