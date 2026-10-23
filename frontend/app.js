@@ -87,9 +87,9 @@ async function loadCamera() {
   indicator.className = `camera-mode${connected ? ' connected' : ''}`;
   indicator.innerHTML = `<i></i><span>${connected ? 'Camera online' : 'Camera offline'}</span>`;
   $('#camera-detail').textContent = connected ? 'Connected' : configured ? 'Source configured' : 'Not configured';
-  $('#camera-source').textContent = camera.worker_available ? 'Room worker ready' : 'Worker unavailable';
-  $('#camera-notice-title').textContent = connected ? 'Room camera is connected' : configured ? 'Camera source is set, but no worker is running' : 'Camera service is not connected';
-  $('#camera-notice-copy').textContent = connected ? 'Entry and exit events will be recorded from recognized doorway crossings.' : configured ? 'The stream address is present, but automatic attendance needs the camera worker to be running.' : 'Automatic entry and exit logging is paused. Configure the room camera and start its worker on the backend.';
+  $('#camera-source').textContent = connected ? (modelReady ? 'Tracking ready' : 'Waiting for model') : camera.worker_available ? 'Connecting' : 'Worker offline';
+  $('#camera-notice-title').textContent = connected ? (modelReady ? 'Room camera is connected' : 'Camera is connected; recognition is not ready') : configured ? 'Camera source is set, but no worker is running' : 'Camera service is not connected';
+  $('#camera-notice-copy').textContent = connected ? (modelReady ? 'Doorway events are recorded automatically during an active class session.' : 'The stream is reachable, but no entry or exit events will be generated until model weights are installed.') : configured ? 'The source is set, but capture is not active. Check the model weights and backend status.' : 'Automatic entry and exit logging is paused. Set CAMERA_RTSP_URL and install the model weights; the backend starts the worker automatically.';
 }
 
 async function loadSession() {
