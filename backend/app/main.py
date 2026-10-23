@@ -1,21 +1,32 @@
 from pathlib import Path
 from uuid import uuid4
 from math import isfinite
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 import json
 from importlib.util import find_spec
-import os
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator, model_validator
 from . import storage
+from .camera import room_camera
 from .recognition import cosine_distance, face_embedding
+from .session_engine import record_camera_transition
 from .settings import MAX_UPLOAD_BYTES, DISTANCE_THRESHOLD, WEIGHTS_PATH
 
-app = FastAPI(title="Research Attendance", version="0.1.0")
+app = FastAPI(title="Lecture Hall Attendance", version="0.2.0")
 FRONTEND = Path(__file__).resolve().parents[2] / "frontend"
 storage.initialize()
+
+
+@app.on_event("startup")
+def start_camera_worker():
+    room_camera.start()
+
+
+@app.on_event("shutdown")
+def stop_camera_worker():
+    room_camera.stop()
 
 
 class Review(BaseModel):
@@ -92,13 +103,7 @@ def get_attendance_policy():
 
 @app.get("/api/camera/status")
 def camera_status():
-    source_configured = bool(os.getenv("CAMERA_RTSP_URL"))
-    return {
-        "connected": False,
-        "source_configured": source_configured,
-        "worker_available": False,
-        "status": "worker_unavailable" if source_configured else "not_configured",
-    }
+    return room_camera.status()
 
 
 @app.put("/api/settings/attendance")
@@ -152,20 +157,11 @@ def stop_session(session_id: str):
 
 @app.post("/api/sessions/{session_id}/events")
 def ingest_camera_event(session_id: str, event: CameraEvent):
-    if event.event_type not in {"entry", "exit"}:
-        raise HTTPException(422, "Event type must be entry or exit.")
-    if not isfinite(event.match_distance) or event.match_distance > DISTANCE_THRESHOLD:
-        raise HTTPException(422, "Camera match is outside the configured identity threshold.")
-    session = storage.session_by_id(session_id)
-    if not session:
-        raise HTTPException(404, "Class session not found.")
-    policy = json.loads(session["policy_json"])
-    late_threshold = (datetime.fromisoformat(session["scheduled_start"]) + timedelta(minutes=policy["late_grace_minutes"])).isoformat()
     try:
-        return storage.record_session_event(
-            event.event_id, session_id, event.person_id, event.event_type,
+        return record_camera_transition(
+            session_id, event.event_id, event.person_id, event.event_type,
             event.occurred_at.astimezone(timezone.utc).isoformat(), event.match_distance,
-            event.camera_id, late_threshold)
+            event.camera_id)
     except LookupError as exc:
         raise HTTPException(404, str(exc)) from exc
     except ValueError as exc:
