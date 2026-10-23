@@ -1,6 +1,6 @@
-# Research Attendance
+# Attendance Console
 
-A local-first attendance research prototype with a web interface and a modular computer-vision backend. It uses a Haar cascade for face detection and a VGGFace descriptor model for candidate matching. Every match is a suggestion and requires human review.
+A local-first attendance workspace with a web interface and a modular computer-vision backend. It uses a Haar cascade for face detection and a VGGFace descriptor model to suggest candidate matches. Every check-in remains subject to human review.
 
 > **Research prototype only.** The recognition threshold has not been validated, and this repository contains no benchmark or fairness evaluation. Do not use the system as the sole basis for attendance, access, employment, education, or other consequential decisions.
 
@@ -22,10 +22,10 @@ You can change the local port and candidate cutoff in `.env`. The cutoff default
 
 ## Run from Python
 
-Python 3.10 and the same model weights are required:
+Python 3.10–3.13 and the same model weights are required. Python 3.13 is recommended for Apple Silicon:
 
 ```bash
-python -m venv .venv
+python3.13 -m venv .venv
 source .venv/bin/activate       # Windows: .venv\\Scripts\\activate
 pip install -r backend/requirements.txt
 uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000
