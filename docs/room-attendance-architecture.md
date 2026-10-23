@@ -20,22 +20,22 @@ Instructor console ── current presence, late arrivals, away/returned,
                        entry/exit timestamps, session audit trail
 ```
 
-The camera worker is intentionally a separate process. It owns video decoding and frame analysis; the web API owns session rules, idempotency, timestamps, and the attendance ledger. The worker sends event transitions and must not write to SQLite directly.
+The camera worker currently runs in a background thread in the FastAPI process. It owns video decoding and frame analysis; the session engine owns timing rules, idempotency, and attendance state. The worker calls the session engine rather than writing to SQLite directly. The HTTP event endpoint is also available for a future isolated worker process.
 
 ## Camera placement
 
 For reliable entry and exit events, the camera must see the entrance and provide a useful face view while a student crosses a configured line or zone. A high, wide corner view of the whole lecture hall can show occupancy but often hides faces, overlaps students, or loses them behind seats. If a single corner camera cannot see both the doorway crossing and a face clearly, use a dedicated entrance camera or another consented attendance method. The current UI diagram is a setup guide, not a live camera view.
 
-The future worker should:
+The current worker:
 
 1. Read an RTSP source from server-side configuration; never return its URL or credentials to the browser.
 2. Decode frames in memory and detect multiple faces within a doorway region of interest.
 3. Associate detections into short-lived tracks so one person standing near the line does not generate repeated events.
 4. Require a stable identity across more than one frame, then detect direction across the configured entrance boundary.
-5. Send one idempotent event per crossing with a unique event id, event time, camera id, matched person id, and distance/confidence.
-6. Drop or quarantine uncertain/ambiguous matches; do not create a guessed identity event.
+5. Emit one idempotent event per crossing with a unique event id, event time, camera id, matched person id, and match distance.
+6. Skip faces outside the configured identity threshold rather than create a guessed identity event.
 
-The existing Haar/VGGFace path is not that worker: it expects exactly one detectable face in a still image, its threshold is unvalidated, and it has no multi-frame tracking or crossing direction logic.
+This is an initial baseline, not a validated crowded-room identity system. It uses Haar face boxes, VGGFace embeddings, and simple horizontal centroid tracking; it has not been tested with the target camera, hallway crowding, lighting, or occlusion. Its match threshold is inherited from the notebook and unvalidated. The entrance region, more robust person tracking, and camera-specific calibration still need field evaluation.
 
 ## Session and grace rules
 
@@ -51,7 +51,7 @@ The backend endpoints are:
 
 - `GET/PUT /api/settings/attendance` — read or change future-session policy.
 - `POST /api/sessions`, `GET /api/sessions/current`, `POST /api/sessions/{id}/end` — manage class sessions.
-- `POST /api/sessions/{id}/events` — accept one recognized `entry`/`exit` transition from the room worker.
+- `POST /api/sessions/{id}/events` — accept one recognized `entry`/`exit` transition from an external worker; the in-process camera thread uses the same session engine directly.
 - `GET /api/sessions/{id}/attendance` and `GET /api/sessions/{id}/events` — read the roster state and event ledger.
 
 Example worker event:
@@ -69,4 +69,4 @@ Example worker event:
 
 ## Implementation status
 
-Session creation, policy persistence, event deduplication, transition state, attendance summaries, and the operational web console are implemented. The RTSP capture worker, multi-face doorway recognition, track association, instructor authentication, and camera-worker request authentication are not implemented. Until those components exist and are validated on the actual camera angle and room conditions, the app must show camera-offline and must not claim automatic capture is active. Compose binds to localhost; keep it that way.
+Session creation, policy persistence, event deduplication, transition state, attendance summaries, the RTSP capture loop, face detection, short track association, and the operational web console are implemented. The camera worker has not been validated on physical camera footage, and the face matcher and threshold remain unvalidated. Instructor authentication and camera-worker request authentication are not implemented. The interface distinguishes an open camera stream from recognition readiness; it must not claim attendance capture when model weights are missing or tracking is stopped. Compose binds to localhost; keep it that way.
