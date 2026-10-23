@@ -37,17 +37,17 @@ Download weights with the Kaggle CLI as described above before using recognition
 
 1. Add participants and their consented reference photos to the class roster.
 2. Set the class name, room, schedule, and timing rules, then start the session.
-3. A camera worker should identify a face at a configured doorway crossing and send an `entry` or `exit` event to the backend. The event API deduplicates repeated transitions and stores event time, camera id, and match distance.
+3. With an RTSP camera and model weights configured, the background camera worker identifies stable face tracks crossing the configured doorway line and records `entry` or `exit` events automatically. The backend deduplicates repeated transitions and stores event time, camera id, and match distance.
 4. The session policy classifies arrival after `scheduled_start + late_grace_minutes` as late. An exit within `early_leave_grace_minutes` of scheduled end is not marked early. A return within `return_grace_minutes` is treated as a brief break; longer breaks are counted for instructor review.
 
-**The camera worker is not implemented yet.** This build has the session, settings, attendance-state, and event-log APIs, but it does not connect to an RTSP feed or automatically detect doorway crossings. The interface reports the camera as offline and does not claim that attendance is being captured. The existing Haar detector expects one face in an image and is not a whole-room, multi-face camera pipeline.
+The RTSP camera worker and event pipeline are implemented, but have not been validated against a physical classroom camera. Configure a local `CAMERA_RTSP_URL`, install the VGGFace weights, and tune the entrance line and direction before expecting capture. The interface reports the camera as offline until the worker successfully opens the stream. The current face detector/tracker is an initial doorway implementation, not a validated crowded-room identity system; it does not infer presence from a wide seating-area frame.
 
 The app stores face embeddings, session rules, event timestamps, and attendance records in a local SQLite database. Uploaded reference images are processed in memory and not retained. Deleting a participant removes their local records.
 
 ## Project structure
 
 ```text
-backend/app/       FastAPI routes, SQLite storage, model inference, settings
+backend/app/       FastAPI routes, SQLite storage, camera worker, session engine
 frontend/          Static HTML, CSS, and JavaScript interface
 research/          Evaluation protocol and research notes
 scripts/           Local setup helpers
@@ -55,7 +55,7 @@ models/            Local model weights (excluded from Git)
 AAS_v3.ipynb       Original Colab research prototype
 ```
 
-The backend separates HTTP handling (`main.py`), persistence and event state (`storage.py`), inference (`recognition.py`), and configuration (`settings.py`). The camera worker will be a separate component that emits the documented event contract; it must not write directly to the attendance database.
+The backend separates HTTP handling (`main.py`), persistence (`storage.py`), face inference (`recognition.py`), the RTSP reader (`camera.py`), session policy (`session_engine.py`), and configuration (`settings.py`). The worker passes events through the session engine rather than writing directly to SQLite.
 
 ## Configuration
 
@@ -65,7 +65,14 @@ The backend separates HTTP handling (`main.py`), persistence and event state (`s
 | `ATTENDANCE_DATA_DIR` | `./data` | Location for the SQLite database |
 | `VGGFACE_WEIGHTS` | `./models/vgg_face_weights.h5` | Path to authorized pretrained weights |
 | `MATCH_DISTANCE_THRESHOLD` | `0.35` | Cosine-distance candidate cutoff inherited from the notebook; unvalidated |
-| `CAMERA_RTSP_URL` | unset | Local camera stream source for the future room-camera worker; the current build does not consume the stream |
+| `CAMERA_RTSP_URL` | unset | Local RTSP stream source consumed by the room-camera worker |
+| `CAMERA_ID` | `lecture-hall-a-door` | Identifier included in camera event records |
+| `CAMERA_DOOR_LINE_X` | `0.5` | Normalized horizontal crossing line in the camera frame (0–1) |
+| `CAMERA_ENTRY_DIRECTION` | `right` | Whether movement to the right or left represents entry into the room |
+| `CAMERA_SAMPLE_INTERVAL` | `0.5` | Seconds between analyzed frames |
+| `CAMERA_TRACK_TIMEOUT` | `4` | Seconds before a temporarily lost face track is discarded |
+| `CAMERA_TRACK_MAX_X_GAP` | `0.15` | Maximum normalized horizontal movement used to associate detections |
+| `CAMERA_MATCH_STREAK` | `3` | Consecutive stable matches required before recording a crossing |
 
 Do not commit weights, participant images, embeddings, attendance exports, secrets, or private datasets. The `.gitignore` excludes local model and data files.
 
