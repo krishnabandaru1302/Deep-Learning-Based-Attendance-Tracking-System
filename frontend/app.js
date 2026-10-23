@@ -30,7 +30,7 @@ $('#match-form').addEventListener('submit', async e => {
   try {
     const form=new FormData(); form.set('image',$('#match-image').files[0]);
     currentMatch=await api('/api/matches',{method:'POST',body:form});
-    if(!currentMatch.candidate_id){result.innerHTML='<strong>No candidate above the configured cutoff</strong><small>No record was created. Use your organization's standard non-biometric attendance process.</small>';return;}
+    if(!currentMatch.candidate_id){result.innerHTML='<strong>No candidate above the configured cutoff</strong><small>No record was created. Use a standard non-biometric attendance process.</small>';return;}
     result.innerHTML=`<strong>Suggested candidate: ${escapeHtml(currentMatch.candidate_name)}</strong><small>Cosine distance ${currentMatch.distance.toFixed(3)} · threshold ${currentMatch.threshold}. A lower distance means a closer match in this prototype.</small><div>Review the image and identity yourself before continuing.</div><div class="result-actions"><button class="button confirm" id="confirm-match">Send to review queue</button><button class="button reject" id="reject-match">Reject suggestion</button></div>`;
     $('#confirm-match').onclick=()=>record(true); $('#reject-match').onclick=()=>{currentMatch=null;result.innerHTML='<strong>Suggestion rejected</strong><small>No attendance record was created.</small>';};
   } catch(err){result.innerHTML=`<strong>Could not complete match</strong><small>${escapeHtml(err.message)}</small>`;}
