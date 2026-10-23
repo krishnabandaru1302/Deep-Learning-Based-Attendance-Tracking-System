@@ -1,11 +1,4 @@
 from functools import lru_cache
-import cv2
-import numpy as np
-from tensorflow.keras.models import Model, Sequential
-from tensorflow.keras.layers import (ZeroPadding2D, Convolution2D, MaxPooling2D,
-                                     Flatten, Dropout, Activation)
-from tensorflow.keras.preprocessing.image import img_to_array
-from tensorflow.keras.applications.imagenet_utils import preprocess_input
 from .settings import WEIGHTS_PATH
 
 
@@ -13,6 +6,12 @@ from .settings import WEIGHTS_PATH
 def _descriptor_model():
     if not WEIGHTS_PATH.is_file():
         raise RuntimeError(f"VGGFace weights not found at {WEIGHTS_PATH}. See the setup guide.")
+    try:
+        from tensorflow.keras.models import Model, Sequential
+        from tensorflow.keras.layers import (ZeroPadding2D, Convolution2D, MaxPooling2D,
+                                             Flatten, Dropout, Activation)
+    except ImportError as exc:
+        raise RuntimeError("TensorFlow is not installed. Install backend/requirements.txt.") from exc
     m = Sequential(name="vggface_vgg16")
     m.add(ZeroPadding2D((1, 1), input_shape=(224, 224, 3)))
     for block, (filters, count) in enumerate(((64, 2), (128, 2), (256, 3), (512, 3), (512, 3))):
@@ -34,6 +33,11 @@ def _descriptor_model():
 
 
 def _decode(image_bytes):
+    try:
+        import cv2
+        import numpy as np
+    except ImportError as exc:
+        raise RuntimeError("OpenCV and NumPy are not installed. Install backend/requirements.txt.") from exc
     data = np.frombuffer(image_bytes, dtype=np.uint8)
     image = cv2.imdecode(data, cv2.IMREAD_COLOR)
     if image is None:
@@ -42,6 +46,13 @@ def _decode(image_bytes):
 
 
 def face_embedding(image_bytes):
+    try:
+        import cv2
+        import numpy as np
+        from tensorflow.keras.preprocessing.image import img_to_array
+        from tensorflow.keras.applications.imagenet_utils import preprocess_input
+    except ImportError as exc:
+        raise RuntimeError("Recognition dependencies are not installed. Follow the setup guide.") from exc
     image = _decode(image_bytes)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     detector = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
@@ -57,6 +68,7 @@ def face_embedding(image_bytes):
 
 
 def cosine_distance(left, right):
+    import numpy as np
     a, b = np.asarray(left, dtype=float), np.asarray(right, dtype=float)
     denominator = np.linalg.norm(a) * np.linalg.norm(b)
     if denominator == 0:
