@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f8f8f5">
-  <meta name="description" content="A simple, thoughtful way to manage attendance.">
-  <title>Attendance — Your people, all in one place</title>
+  <meta name="description" content="A lecture hall attendance workspace for room-camera check-ins and human review.">
+  <title>Lecture hall attendance</title>
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
@@ -14,41 +14,41 @@
       <span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M8 17.5 13.2 22 24 10"/></svg></span>
       <span>attendance<span class="brand-period">.</span></span>
     </a>
-    <nav class="topnav" aria-label="Main navigation"><a class="active" href="#overview">Overview</a><a href="#people-section">People</a><a href="#queue-section">Check-ins</a></nav>
-    <div class="topbar-right"><span class="model-status" id="model-status"><i></i><span>Checking setup</span></span><span class="environment"><span class="local-dot"></span> On this device</span></div>
+    <nav class="topnav" aria-label="Main navigation"><a class="active" href="#overview">Overview</a><a href="#people-section">Class roster</a><a href="#queue-section">Check-ins</a></nav>
+    <div class="topbar-right"><span class="camera-mode"><span class="camera-dot"></span> Snapshot mode</span><span class="model-status" id="model-status"><i></i><span>Checking setup</span></span></div>
   </header>
 
   <main class="shell" id="overview">
     <section class="hero">
       <div class="hero-copy">
-        <span class="eyebrow"><span class="eyebrow-dot"></span> YOUR ATTENDANCE HOME</span>
-        <h1>Good things happen<br>when everyone <em>shows up.</em></h1>
-        <p>Keep your people organized and check-ins easy to follow. Start by adding someone, then review each check-in together.</p>
-        <a class="hero-button" href="#enroll-card">Add your first person <span aria-hidden="true">→</span></a>
-        <div class="hero-note"><span class="tiny-lock" aria-hidden="true">✳</span> Your workspace stays on this device.</div>
+        <span class="eyebrow"><span class="eyebrow-dot"></span> LECTURE HALL WORKSPACE</span>
+        <h1>Attendance for the<br><em>whole room.</em></h1>
+        <p>Keep a class roster and review check-ins from a camera snapshot. You see every suggestion before it counts.</p>
+        <a class="hero-button" href="#checkin-card">Review a camera snapshot <span aria-hidden="true">→</span></a>
+        <div class="hero-note"><span class="tiny-lock" aria-hidden="true">✳</span> This build uses uploaded snapshots; live CCTV isn’t connected yet.</div>
       </div>
       <div class="hero-art" aria-hidden="true">
         <div class="sun-orbit orbit-one"></div><div class="sun-orbit orbit-two"></div>
         <svg class="people-scene" viewBox="0 0 440 300" fill="none">
-          <path d="M85 228c9-41 45-66 83-66s74 25 83 66" fill="#D8E7FF"/>
-          <path d="M183 237c9-49 48-80 91-80s82 31 91 80" fill="#B9E2D1"/>
-          <path d="M77 238h307" stroke="#5367C9" stroke-width="3" stroke-linecap="round" opacity=".15"/>
-          <circle cx="168" cy="111" r="33" fill="#F2BFA7"/><path d="M136 108c1-28 18-43 39-43 19 0 32 13 34 34-14-2-26-11-33-22-7 15-21 25-40 31Z" fill="#293B69"/>
-          <path d="M112 223c3-44 24-69 56-69s54 25 57 69" fill="#6677DF"/><path d="M145 158c5 12 13 18 23 18s18-6 23-18" stroke="#F9D4C5" stroke-width="8" stroke-linecap="round"/>
-          <circle cx="282" cy="107" r="34" fill="#C98F6F"/><path d="M247 102c3-25 18-39 39-39 22 0 37 16 37 42-11-6-19-14-24-25-12 15-29 22-52 22Z" fill="#302C48"/>
-          <path d="M222 232c4-43 26-68 60-68s57 25 60 68" fill="#E7AA54"/><path d="M257 169c7 9 15 13 25 13 9 0 17-4 25-13" stroke="#E7B9A2" stroke-width="8" stroke-linecap="round"/>
-          <rect x="260" y="28" width="145" height="72" rx="18" fill="white"/><circle cx="293" cy="64" r="18" fill="#E5F3EB"/><path d="m284 64 6 6 12-13" stroke="#31916A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M322 57h60M322 70h43" stroke="#D8DEE8" stroke-width="6" stroke-linecap="round"/>
-          <circle cx="83" cy="118" r="13" fill="#F7D887"/><path d="m74 118 6 6 12-13" stroke="#8B7235" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M99 62c8 0 8-12 0-12 0-8-12-8-12 0-8 0-8 12 0 12h12Z" fill="#C9D6FF"/>
-          <path d="M363 130c7 0 7-10 0-10 0-7-10-7-10 0-7 0-7 10 0 10h10Z" fill="#F6D8C8"/>
+          <path d="M112 235V154l108-74 108 74v81" fill="#fff" stroke="#D6DCCF" stroke-width="3" stroke-linejoin="round"/>
+          <path d="M129 232v-69l91-62 91 62v69" fill="#FBFAF4"/>
+          <path d="M151 190h138M151 209h138M151 228h138" stroke="#E9E7DD" stroke-width="2"/>
+          <path d="M162 182h16m34 0h16m34 0h16M162 201h16m34 0h16m34 0h16M162 220h16m34 0h16m34 0h16" stroke="#6878D7" stroke-width="7" stroke-linecap="round"/>
+          <path d="M174 177v-8m46 8v-8m46 8v-8M174 196v-8m46 8v-8m46 8v-8M174 215v-8m46 8v-8m46 8v-8" stroke="#E9B18B" stroke-width="5" stroke-linecap="round"/>
+          <path d="M203 80h17V61" stroke="#6878D7" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="179" y="42" width="31" height="20" rx="7" transform="rotate(-14 179 42)" fill="#6272D3"/>
+          <circle cx="188" cy="52" r="4" fill="#DDE4FF"/><path d="M189 55 160 92" stroke="#D7C375" stroke-width="2" stroke-dasharray="4 5"/>
+          <rect x="279" y="38" width="120" height="56" rx="15" fill="white"/><circle cx="305" cy="66" r="14" fill="#E5F3EB"/><path d="m298 66 5 5 9-11" stroke="#31916A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M328 60h53M328 72h38" stroke="#D8DEE8" stroke-width="5" stroke-linecap="round"/>
+          <circle cx="88" cy="130" r="12" fill="#F7D887"/><path d="m80 130 5 5 10-11" stroke="#8B7235" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M91 82c7 0 7-10 0-10 0-7-10-7-10 0-7 0-7 10 0 10h10Z" fill="#C9D6FF"/>
         </svg>
-        <div class="art-caption"><span class="caption-spark">✦</span><span><strong>Every check-in, seen.</strong><small>Clear, calm, and in your hands.</small></span></div>
+        <div class="art-caption"><span class="caption-spark">⌾</span><span><strong>Room camera view</strong><small>Positioned in the back corner.</small></span></div>
       </div>
     </section>
 
     <section class="overview-row" aria-label="Your workspace at a glance">
-      <article class="overview-tile"><span class="tile-icon tile-blue" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 5.5a3 3 0 0 1 0 5.8M17 14a5 5 0 0 1 3.5 4.7"/></svg></span><span class="tile-copy"><small>People in your workspace</small><strong id="people-stat">0</strong></span><span class="tile-aside">people</span></article>
-      <article class="overview-tile"><span class="tile-icon tile-peach" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2"/></svg></span><span class="tile-copy"><small>Waiting for your review</small><strong id="pending-count">0</strong></span><span class="tile-aside">check-ins</span></article>
+      <article class="overview-tile"><span class="tile-icon tile-blue" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M16 5.5a3 3 0 0 1 0 5.8M17 14a5 5 0 0 1 3.5 4.7"/></svg></span><span class="tile-copy"><small>People on the class roster</small><strong id="people-stat">0</strong></span><span class="tile-aside">people</span></article>
+      <article class="overview-tile"><span class="tile-icon tile-peach" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2"/></svg></span><span class="tile-copy"><small>Check-ins to review</small><strong id="pending-count">0</strong></span><span class="tile-aside">check-ins</span></article>
       <div class="overview-footnote"><span class="footnote-check">✓</span><span>People stay in control.<br><strong>You review before anything is saved.</strong></span></div>
     </section>
 
@@ -58,15 +58,15 @@
       <a href="https://github.com/krishnabandaru1302/Deep-Learning-Based-Attendance-Tracking-System/blob/docs/attendance-system-readme/README.md#install-with-docker" target="_blank" rel="noreferrer">See setup steps <span aria-hidden="true">→</span></a>
     </section>
 
-    <div class="section-title"><div><span class="eyebrow">GET STARTED</span><h2>A simple three-step flow</h2></div><span class="section-hint">You’re always the one making the final call.</span></div>
+    <div class="section-title"><div><span class="eyebrow">FOR TODAY’S CLASS</span><h2>From room camera to roll call</h2></div><span class="section-hint">You’re always the one making the final call.</span></div>
     <section class="workflows" aria-label="Get started with attendance">
       <article class="flow-card" id="enroll-card">
         <div class="flow-top"><span class="flow-number">01</span><span class="flow-art flow-art-person" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="32" cy="21" r="12"/><path d="M12 56c2-13 9-20 20-20s18 7 20 20"/><path d="M45 11h10M50 6v10"/></svg></span></div>
-        <h3>Add a person</h3><p>Give them a name and add a clear photo. Make sure they’ve agreed first.</p>
+        <h3>Build the class roster</h3><p>Add each participant once, using a clear photo and their permission.</p>
         <form id="enroll-form">
-          <label for="person-name">What should we call them?</label>
+          <label for="person-name">Participant name</label>
           <input id="person-name" name="display_name" maxlength="80" placeholder="e.g. Jamie Lee" required>
-          <label class="dropzone" for="enroll-image"><span class="upload-symbol" aria-hidden="true">↑</span><strong>Choose a photo</strong><small>One face, looking at the camera · JPG or PNG</small></label>
+          <label class="dropzone" for="enroll-image"><span class="upload-symbol" aria-hidden="true">↑</span><strong>Add a reference photo</strong><small>One face, looking at the camera · JPG or PNG</small></label>
           <input class="file-input" id="enroll-image" type="file" accept="image/jpeg,image/png" required>
           <div id="enroll-file" class="file-name">No photo chosen yet</div>
           <img id="enroll-preview" class="preview hidden" alt="Preview of the selected photo">
@@ -77,30 +77,30 @@
       </article>
       <article class="flow-card" id="checkin-card">
         <div class="flow-top"><span class="flow-number">02</span><span class="flow-art flow-art-checkin" aria-hidden="true"><svg viewBox="0 0 64 64"><rect x="9" y="13" width="46" height="38" rx="9"/><circle cx="32" cy="29" r="8"/><path d="M20 45c2-6 6-9 12-9s10 3 12 9M43 13l4-5M52 18l5-2"/></svg></span></div>
-        <h3>Take attendance</h3><p>Add a photo from today. We’ll suggest who it might be, if we find a close match.</p>
+        <h3>Review a room-camera snapshot</h3><p>Choose a close-up image of one person from the classroom camera. We’ll suggest a possible match.</p>
         <form id="match-form">
-          <label class="dropzone match-dropzone" for="match-image"><span class="upload-symbol" aria-hidden="true">↑</span><strong>Choose a check-in photo</strong><small>One face, easy to see · JPG or PNG</small></label>
+          <label class="dropzone match-dropzone" for="match-image"><span class="upload-symbol" aria-hidden="true">↑</span><strong>Choose a camera snapshot</strong><small>One visible face · JPG or PNG</small></label>
           <input class="file-input" id="match-image" type="file" accept="image/jpeg,image/png" required>
-          <div id="match-file" class="file-name">No photo chosen yet</div>
+          <div id="match-file" class="file-name">No snapshot chosen yet</div>
           <img id="match-preview" class="preview hidden" alt="Preview of the selected check-in photo">
-          <div class="human-review"><span class="review-check" aria-hidden="true">✓</span><span>We’ll ask you to check the suggestion first.</span></div>
-          <button class="button primary" type="submit">Find a person <span aria-hidden="true">→</span></button>
+          <div class="human-review"><span class="review-check" aria-hidden="true">✓</span><span>One person per image in this version. You check every suggestion.</span></div>
+          <button class="button primary" type="submit">Check this snapshot <span aria-hidden="true">→</span></button>
         </form>
         <div id="match-result" class="result hidden" aria-live="polite"></div>
       </article>
       <article class="flow-card explain-card">
         <div class="flow-top"><span class="flow-number">03</span><span class="flow-art flow-art-review" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M19 10h26a5 5 0 0 1 5 5v37H14V15a5 5 0 0 1 5-5Z"/><path d="M23 24h17M23 32h17M23 40h8"/><circle cx="45" cy="43" r="11"/><path d="m40 43 4 4 7-8"/></svg></span></div>
-        <h3>You decide</h3><p>Check the person’s name before confirming. A suggestion never marks someone present on its own.</p>
+        <h3>Confirm the roll</h3><p>Check the suggested name and confirm it. The system never marks a student present by itself.</p>
         <div class="mini-review" aria-hidden="true"><span class="mini-avatar">J</span><span class="mini-lines"><i></i><i></i></span><span class="mini-check">✓</span></div>
         <div class="explain-note"><span>✓</span> Nothing is recorded until you confirm.</div>
       </article>
     </section>
 
     <section class="records" aria-label="People and check-ins">
-      <article class="record-card" id="people-section"><div class="record-heading"><div><span class="eyebrow">YOUR GROUP</span><h2>People</h2><p>Everyone you’ve added to this workspace.</p></div><span class="count" id="people-count">0</span></div><div id="people-list" class="list empty"><span class="empty-icon" aria-hidden="true">☼</span><span>No one here yet. Add your first person above.</span></div></article>
-      <article class="record-card" id="queue-section"><div class="record-heading"><div><span class="eyebrow">NEEDS A LOOK</span><h2>Check-ins</h2><p>Review suggested matches and recent decisions.</p></div><button class="button secondary" id="refresh"><span aria-hidden="true">↻</span> Refresh</button></div><div id="attendance-list" class="list empty"><span class="empty-icon empty-clock" aria-hidden="true">◷</span><span>When someone checks in, you’ll see them here.</span></div></article>
+      <article class="record-card" id="people-section"><div class="record-heading"><div><span class="eyebrow">CLASS LIST</span><h2>Class roster</h2><p>People available to match in this room.</p></div><span class="count" id="people-count">0</span></div><div id="people-list" class="list empty"><span class="empty-icon" aria-hidden="true">☼</span><span>No one here yet. Add your first participant above.</span></div></article>
+      <article class="record-card" id="queue-section"><div class="record-heading"><div><span class="eyebrow">INSTRUCTOR REVIEW</span><h2>Attendance check-ins</h2><p>Review matches from the room-camera snapshots.</p></div><button class="button secondary" id="refresh"><span aria-hidden="true">↻</span> Refresh</button></div><div id="attendance-list" class="list empty"><span class="empty-icon empty-clock" aria-hidden="true">◷</span><span>Reviewed check-ins will appear here.</span></div></article>
     </section>
-    <footer><span class="footer-brand">attendance<span>.</span></span><span><span class="footer-shield">◇</span> Photos are processed for matching; only face templates are kept. Always ask permission first.</span></footer>
+    <footer><span class="footer-brand">attendance<span>.</span></span><span><span class="footer-shield">◇</span> Ask before enrolling anyone. Live room-camera connection and multi-person detection are not available in this version.</span></footer>
   </main>
   <script src="/static/app.js" defer></script>
 </body>
