@@ -1,0 +1,16 @@
+services:
+  attendance:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${APP_PORT:-8000}:8000"
+    environment:
+      ATTENDANCE_DATA_DIR: /app/data
+      VGGFACE_WEIGHTS: /app/models/vgg_face_weights.h5
+      MATCH_DISTANCE_THRESHOLD: ${MATCH_DISTANCE_THRESHOLD:-0.35}
+    volumes:
+      - attendance-data:/app/data
+      - ./models:/app/models:ro
+
+volumes:
+  attendance-data:
