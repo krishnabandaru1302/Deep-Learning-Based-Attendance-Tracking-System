@@ -1,0 +1,7 @@
+__pycache__/
+.venv/
+*.py[cod]
+.env
+data/
+models/*.h5
+*.sqlite3
