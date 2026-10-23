@@ -12,7 +12,7 @@ The Docker Compose setup is the easiest way to run the interface and API togethe
 cp .env.example .env
 python3 -m pip install kaggle
 # Configure Kaggle credentials using Kaggle's supported credential setup.
-./scripts/download-model.sh
+bash scripts/download-model.sh
 docker compose up --build
 ```
 
