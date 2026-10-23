@@ -2,7 +2,7 @@
 
 A local-first lecture hall attendance system. A scheduled class session has configurable arrival, early-departure, and return grace periods. The backend records timestamped `entry` and `exit` events, derives attendance states, and keeps an event log for the class roster.
 
-> **Research prototype only.** The recognition threshold has not been validated, and this repository contains no benchmark or fairness evaluation. Do not use the system as the sole basis for attendance, access, employment, education, or other consequential decisions.
+> **Implementation status: local MVP.** Session rules, event storage, and an initial RTSP camera worker are implemented. Recognition accuracy, doorway tracking, and false-match rates have not been validated on classroom footage. Do not rely on automated marks for official attendance until the camera-specific evaluation, instructor access controls, and a correction process are in place.
 
 ## Install with Docker
 
