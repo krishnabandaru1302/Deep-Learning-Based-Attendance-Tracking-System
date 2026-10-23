@@ -30,8 +30,8 @@ $('#match-form').addEventListener('submit', async e => {
   try {
     const form=new FormData(); form.set('image',$('#match-image').files[0]);
     currentMatch=await api('/api/matches',{method:'POST',body:form});
-    if(!currentMatch.candidate_id){result.innerHTML='<strong>No candidate above the configured cutoff</strong><small>Do not treat this as proof that the person is unknown. Use the manual attendance process.</small>';return;}
-    result.innerHTML=`<strong>Suggested candidate: ${escapeHtml(currentMatch.candidate_name)}</strong><small>Cosine distance ${currentMatch.distance.toFixed(3)} · threshold ${currentMatch.threshold}. A lower distance means a closer match in this prototype.</small><div>Review the image and identity yourself before confirming.</div><div class="result-actions"><button class="button confirm" id="confirm-match">Confirm attendance</button><button class="button reject" id="reject-match">Reject suggestion</button></div>`;
+    if(!currentMatch.candidate_id){result.innerHTML='<strong>No candidate above the configured cutoff</strong><small>No record was created. Use your organization's standard non-biometric attendance process.</small>';return;}
+    result.innerHTML=`<strong>Suggested candidate: ${escapeHtml(currentMatch.candidate_name)}</strong><small>Cosine distance ${currentMatch.distance.toFixed(3)} · threshold ${currentMatch.threshold}. A lower distance means a closer match in this prototype.</small><div>Review the image and identity yourself before continuing.</div><div class="result-actions"><button class="button confirm" id="confirm-match">Send to review queue</button><button class="button reject" id="reject-match">Reject suggestion</button></div>`;
     $('#confirm-match').onclick=()=>record(true); $('#reject-match').onclick=()=>{currentMatch=null;result.innerHTML='<strong>Suggestion rejected</strong><small>No attendance record was created.</small>';};
   } catch(err){result.innerHTML=`<strong>Could not complete match</strong><small>${escapeHtml(err.message)}</small>`;}
   finally{button.disabled=false;}
@@ -39,7 +39,7 @@ $('#match-form').addEventListener('submit', async e => {
 
 async function record(confirmed){
   if(!confirmed||!currentMatch?.candidate_id)return;
-  try{const data=new FormData();data.set('person_id',currentMatch.candidate_id);data.set('distance',currentMatch.distance);await api('/api/attendance',{method:'POST',body:data});$('#match-result').innerHTML='<strong>Attendance added to the review queue</strong><small>Use the queue below to confirm or reject the record.</small>';currentMatch=null;await refresh();}
+  try{const data=new FormData();data.set('person_id',currentMatch.candidate_id);data.set('distance',currentMatch.distance);await api('/api/attendance',{method:'POST',body:data});$('#match-result').innerHTML='<strong>Attendance queued for review</strong><small>Confirm or reject the pending entry in the queue below.</small>';currentMatch=null;await refresh();}
   catch(err){$('#match-result').innerHTML=`<strong>Could not save attendance</strong><small>${escapeHtml(err.message)}</small>`;}
 }
 
