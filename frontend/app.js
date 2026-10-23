@@ -50,6 +50,9 @@ async function refresh(){
   try{
     const [people,records]=await Promise.all([api('/api/people'),api('/api/attendance')]);
     $('#people-count').textContent=people.length;
+    $('#people-stat').textContent=people.length;
+    $('#pending-count').textContent=records.filter(record=>record.review_status==='pending').length;
+    $('#last-updated').textContent=new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});
     $('#people-list').className='list'+(people.length?'':' empty');
     $('#people-list').innerHTML=people.length?people.map(p=>`<div class="row"><span>${escapeHtml(p.display_name)}<small>Added ${new Date(p.created_at).toLocaleDateString()}</small></span><button data-delete="${p.id}">Delete</button></div>`).join(''):'No participants enrolled yet.';
     $('#attendance-list').className='list'+(records.length?'':' empty');
@@ -67,12 +70,21 @@ async function refreshModelStatus(){
     const health=await api('/api/health');
     modelReady=health.model_ready;
     indicator.className=`model-status ${health.model_ready?'ready':'missing'}`;
-    const labels={ready:'Model ready',dependencies_missing:'Install model dependencies',weights_missing:'Add model weights'};
+    const labels={ready:'Model ready',dependencies_missing:'Setup required',weights_missing:'Weights required'};
+    const details={dependencies_missing:['Recognition isn’t configured','Install the recognition dependencies to enable image-based actions.'],weights_missing:['Model weights are missing','Add the VGGFace weights to enable enrollment and check-ins.']};
     indicator.lastChild.textContent=labels[health.model_state]||'Model unavailable';
+    $('#model-summary').textContent=labels[health.model_state]||'Unavailable';
+    const notice=$('#setup-notice');
+    notice.classList.toggle('hidden',modelReady);
+    if(!modelReady){const [title,copy]=details[health.model_state]||['Recognition is unavailable','Check that the local service is running.'];$('#setup-title').textContent=title;$('#setup-copy').textContent=copy;}
   }catch{
     modelReady=false;
     indicator.className='model-status error';
     indicator.lastChild.textContent='Service unavailable';
+    $('#model-summary').textContent='Unavailable';
+    $('#setup-notice').classList.remove('hidden');
+    $('#setup-title').textContent='Service unavailable';
+    $('#setup-copy').textContent='Check that the local attendance service is running.';
   }
   document.querySelectorAll('#enroll-form .primary, #match-form .primary').forEach(button=>{
     button.disabled=!modelReady;
