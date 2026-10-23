@@ -1,5 +1,6 @@
 const $ = (s) => document.querySelector(s);
 let currentMatch = null;
+let modelReady = false;
 const api = async (url, options = {}) => {
   const response = await fetch(url, options);
   const body = await response.json().catch(() => ({}));
@@ -14,6 +15,7 @@ $('#match-image').addEventListener('change', e => {fileLabel(e.target, '#match-f
 $('#enroll-form').addEventListener('submit', async e => {
   e.preventDefault();
   const button = e.currentTarget.querySelector('button'); const msg = $('#enroll-message');
+  if (!modelReady) { msg.textContent = 'Complete model setup before enrolling participants.'; msg.className = 'message error'; return; }
   button.disabled = true; msg.className = 'message'; msg.textContent = 'Creating enrollment…';
   try {
     const form = new FormData(e.currentTarget);
@@ -26,6 +28,7 @@ $('#enroll-form').addEventListener('submit', async e => {
 
 $('#match-form').addEventListener('submit', async e => {
   e.preventDefault(); const button=e.currentTarget.querySelector('button'); const result=$('#match-result');
+  if (!modelReady) { result.classList.remove('hidden'); result.innerHTML='<strong>Model setup required</strong><small>Install the recognition dependencies and add the VGGFace weights to enable check-ins.</small>'; return; }
   button.disabled=true; result.classList.remove('hidden'); result.textContent='Analyzing image…'; currentMatch=null;
   try {
     const form=new FormData(); form.set('image',$('#match-image').files[0]);
@@ -62,12 +65,19 @@ async function refreshModelStatus(){
   const indicator=$('#model-status');
   try{
     const health=await api('/api/health');
+    modelReady=health.model_ready;
     indicator.className=`model-status ${health.model_ready?'ready':'missing'}`;
-    indicator.lastChild.textContent=health.model_ready?'Weights detected':'Model setup required';
+    const labels={ready:'Model ready',dependencies_missing:'Install model dependencies',weights_missing:'Add model weights'};
+    indicator.lastChild.textContent=labels[health.model_state]||'Model unavailable';
   }catch{
+    modelReady=false;
     indicator.className='model-status error';
     indicator.lastChild.textContent='Service unavailable';
   }
+  document.querySelectorAll('#enroll-form .primary, #match-form .primary').forEach(button=>{
+    button.disabled=!modelReady;
+    button.title=modelReady?'':'Complete model setup to enable this action.';
+  });
 }
 function escapeHtml(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 refresh();
