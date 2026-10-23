@@ -1,5 +1,7 @@
 from pathlib import Path
 from uuid import uuid4
+from math import isfinite
+from importlib.util import find_spec
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -28,7 +30,14 @@ async def read_image(file: UploadFile):
 
 @app.get("/api/health")
 def health():
-    return {"status": "ok", "model_ready": WEIGHTS_PATH.is_file()}
+    missing = [name for name in ("cv2", "numpy", "tensorflow") if find_spec(name) is None]
+    if missing:
+        model_state = "dependencies_missing"
+    elif not WEIGHTS_PATH.is_file():
+        model_state = "weights_missing"
+    else:
+        model_state = "ready"
+    return {"status": "ok", "model_ready": model_state == "ready", "model_state": model_state}
 
 
 @app.get("/api/people")
@@ -37,10 +46,12 @@ def list_people():
 
 
 @app.post("/api/people")
-async def enroll(display_name: str = Form(...), image: UploadFile = File(...)):
+async def enroll(display_name: str = Form(...), consent: bool = Form(False), image: UploadFile = File(...)):
     name = display_name.strip()
     if not name or len(name) > 80:
         raise HTTPException(422, "Name must be between 1 and 80 characters.")
+    if not consent:
+        raise HTTPException(400, "Participant consent is required before enrollment.")
     try:
         vector = face_embedding(await read_image(image))
         person_id = str(uuid4())
@@ -81,6 +92,8 @@ async def match(image: UploadFile = File(...)):
 
 @app.post("/api/attendance")
 def mark_attendance(person_id: str = Form(...), distance: float = Form(...)):
+    if not isfinite(distance) or distance < 0 or distance > DISTANCE_THRESHOLD:
+        raise HTTPException(422, "The candidate distance is outside the configured cutoff.")
     if not any(p["id"] == person_id for p in storage.people()):
         raise HTTPException(404, "Person not found.")
     record_id = storage.record_attendance(person_id, distance)
